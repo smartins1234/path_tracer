@@ -2,8 +2,8 @@
 
 #include "raytracer.h"
 
-Raytracer tracer(256, 256);
-SampleGenerator sampleGen = SampleGenerator::GetGenerator(256);
+Raytracer tracer(32, 32);
+SampleGenerator sampleGen = SampleGenerator::GetGenerator(32);
 
 int main(int argc, char** argv)
 {

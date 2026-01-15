@@ -118,9 +118,9 @@ bool MtlBlinn::GenerateSample( SamplerInfo const &sInfo, Vec3f &dir, Info &si ) 
     si.prob = 1.0f - (dPow + rPow + tPow);
 
     Color emit = Emission().Eval(sInfo.UVW());
-    if (isnan(emit.r)) {
-            emit = Color().Black();
-    }
+    // if (isnan(emit.r)) {
+    //         emit = Color().Black();
+    // }
     if (!emit.IsBlack()) {si.mult = emit; dir = sInfo.N(); return false;}
 
     dir = Vec3f(0.0f);

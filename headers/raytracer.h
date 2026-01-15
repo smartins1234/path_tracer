@@ -3,7 +3,7 @@
 
 #include "renderer.h"
 #include "rng.h"
-#include "photonmap.h"
+// #include "photonmap.h"
 
 // a class for using Halton sequences to produce pseudo-random samples
 // of pixels and disks
@@ -82,7 +82,7 @@ private:
     cy::Matrix3f camToWorld;    // camera to world space matrix
     cy::Matrix3f worldToCam;    // world to camera space matrix
 
-    PhotonMap* pMap = nullptr;              // photon map
+    // PhotonMap* pMap = nullptr;              // photon map
     std::vector<Light*> lightsRenderable;   // list of renderable lights
 
     // global volume parameters
@@ -93,9 +93,9 @@ private:
 public:
     Raytracer(int minSamples, int maxSamples)
         : sampleMax(maxSamples), sampleMin(minSamples)
-    { next = 0; pMap = new PhotonMap(); }
+    { next = 0; }
 
-    ~Raytracer() { if (pMap != nullptr) { delete pMap; }}
+    ~Raytracer() { }
 
     int GetMaxBounce() const { return bounceMax; }
 
