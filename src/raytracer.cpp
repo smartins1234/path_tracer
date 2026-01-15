@@ -181,106 +181,113 @@ Color Raytracer::tracePath(Ray ray, SamplerInfo sInfo, HitInfo& hInfo, int bounc
 
     // if we've hit nothing, the hit distance is effectively infinity
     if ( !hit ) {
-        hInfo.z = BIGFLOAT;
+        return Color().Black();
+        // hInfo.z = BIGFLOAT;
     }
 
-    // sampling time t
-    float roll = sInfo.RandomFloat();
-    float tRand = -log(1-roll) / sig_t;
+    // // sampling time t
+    // float roll = sInfo.RandomFloat();
+    // float tRand = -log(1-roll) / sig_t;
 
-    // if our time sample is less than the hit "time" (aka distance)
-    if ( tRand < hInfo.z ) {
-        if ( roll < (sig_a / sig_t) ) { // russian roulette absorption/emmision
-            // treating "absorption" as emision of the background color
-            if ( bounce == 0 && !hit ) {
-                Vec3f uvw(float(sInfo.X())/renderImage.GetWidth(), float(sInfo.Y())/renderImage.GetHeight(), 0.5);
-                return scene.background.Eval(uvw);
-            }
-            else if ( !hit ) {
-                return scene.environment.EvalEnvironment(ray.dir);
-            }
-            return Color().Black();
-        }
+    // // if our time sample is less than the hit "time" (aka distance)
+    // if ( tRand < hInfo.z ) {
+    //     if ( roll < (sig_a / sig_t) ) { // russian roulette absorption/emmision
+    //         // treating "absorption" as emision of the background color
+    //         if ( bounce == 0 && !hit ) {
+    //             Vec3f uvw(float(sInfo.X())/renderImage.GetWidth(), float(sInfo.Y())/renderImage.GetHeight(), 0.5);
+    //             return scene.background.Eval(uvw);
+    //         }
+    //         else if ( !hit ) {
+    //             return scene.environment.EvalEnvironment(ray.dir);
+    //         }
+    //         return Color().Black();
+    //     }
 
-        // probability and transmittance of this time sample
-        float pdf = exp(-sig_t * tRand) * sig_t;
-        float transmittance = exp(-sig_t * tRand);
+    //     // probability and transmittance of this time sample
+    //     float pdf = exp(-sig_t * tRand) * sig_t;
+    //     float transmittance = exp(-sig_t * tRand);
 
-        // calculate the point we're scattering from
-        Vec3f p = ray.p + tRand * ray.dir;
+    //     // calculate the point we're scattering from
+    //     Vec3f p = ray.p + tRand * ray.dir;
 
-        Color lightSampColor = Color().Black();
+    //     Color lightSampColor = Color().Black();
 
-        // sample the lights to get a new direction
-        HitInfo shadowInfo(hInfo);
-        shadowInfo.p = p;
-        SamplerInfo lSampInfo(sInfo);
-        lSampInfo.SetHit(ray, shadowInfo);
-        Light* light = this->randomLight(sInfo);
-        Vec3f lDir;
-        DirSampler::Info lInfo;
-        lInfo.SetVoid();
+    //     // sample the lights to get a new direction
+    //     HitInfo shadowInfo(hInfo);
+    //     shadowInfo.p = p;
+    //     SamplerInfo lSampInfo(sInfo);
+    //     lSampInfo.SetHit(ray, shadowInfo);
+    //     Light* light = this->randomLight(sInfo);
+    //     Vec3f lDir;
+    //     DirSampler::Info lInfo;
+    //     lInfo.SetVoid();
 
-        bool sample = light->GenerateSample(lSampInfo, lDir, lInfo);
-        if ( sample ) { // if we get a non-zero sample
-            // adjust the samples probability
-            lInfo.prob /= lightsRenderable.size();
+    //     bool sample = light->GenerateSample(lSampInfo, lDir, lInfo);
+    //     if ( sample ) { // if we get a non-zero sample
+    //         // adjust the samples probability
+    //         lInfo.prob /= lightsRenderable.size();
 
-            // check if this sample is in shadow
-            shadowInfo.Init();
-            bool shadowHit = ShadowTraceRay(Ray(p, lDir), shadowInfo, HIT_FRONT_AND_BACK, 1.0);
+    //         // check if this sample is in shadow
+    //         shadowInfo.Init();
+    //         bool shadowHit = ShadowTraceRay(Ray(p, lDir), shadowInfo, HIT_FRONT_AND_BACK, 1.0);
 
-            // get color value from the light sample
-            if ( (shadowHit && shadowInfo.isLight && shadowInfo.light == light) ) {
-                // there's nothing between the light we sampled and the point
-                float l_transmit = exp(-sig_t * shadowInfo.z * lDir.Length());
-                float l_pdf = exp(-sig_t * shadowInfo.z * lDir.Length());
+    //         // get color value from the light sample
+    //         if ( (shadowHit && shadowInfo.isLight && shadowInfo.light == light) ) {
+    //             // there's nothing between the light we sampled and the point
+    //             float l_transmit = exp(-sig_t * shadowInfo.z * lDir.Length());
+    //             float l_pdf = exp(-sig_t * shadowInfo.z * lDir.Length());
                 
-                // multiple importance sampling weight calculation
-                lightSampColor = l_transmit / l_pdf * lInfo.mult;
-                float lightToPhase = 1 / (4 * M_PI) * l_pdf;
-                lightSampColor *= lightToPhase;
+    //             // multiple importance sampling weight calculation
+    //             lightSampColor = l_transmit / l_pdf * lInfo.mult;
+    //             float lightToPhase = 1 / (4 * M_PI) * l_pdf;
+    //             lightSampColor *= lightToPhase;
 
-                float w = (lInfo.prob * lInfo.prob) / ( (lInfo.prob * lInfo.prob) + (lightToPhase * lightToPhase) );
-                lightSampColor *= w;
-            }
-        }
+    //             float w = (lInfo.prob * lInfo.prob) / ( (lInfo.prob * lInfo.prob) + (lightToPhase * lightToPhase) );
+    //             lightSampColor *= w;
+    //         }
+    //     }
 
-        // sample the phase function to get a new direction
-        float cosTheta = (2 * sInfo.RandomFloat()) - 1;
-        float sinTheta = sqrt(1 - pow(cosTheta, 2));
-        float phi = 2 * M_PI * sInfo.RandomFloat();
-        Vec3f dirNew(sinTheta*cos(phi), sinTheta*sin(phi), cosTheta);
+    //     // sample the phase function to get a new direction
+    //     float cosTheta = (2 * sInfo.RandomFloat()) - 1;
+    //     float sinTheta = sqrt(1 - pow(cosTheta, 2));
+    //     float phi = 2 * M_PI * sInfo.RandomFloat();
+    //     Vec3f dirNew(sinTheta*cos(phi), sinTheta*sin(phi), cosTheta);
 
-        // and recurse
-        Color samp2 = tracePath(Ray(p, dirNew), sInfo, hInfo, bounce+1);
-        float w2 = 0.5;
+    //     // and recurse
+    //     Color samp2 = tracePath(Ray(p, dirNew), sInfo, hInfo, bounce+1);
+    //     float w2 = 0.5;
 
-        Color total = ( samp2 * w2 ) + lightSampColor;
+    //     Color total = ( samp2 * w2 ) + lightSampColor;
 
-        return transmittance / pdf * sig_s * total;
-    }
-    else if ( hit ) {   // if we don't scatter before hitting a surface
+    //     return transmittance / pdf * sig_s * total;
+    // }
+    // else if ( hit ) {   // if we don't scatter before hitting a surface
         // get the probability and transmittance of this hit
-        float pdf = exp(-sig_t * hInfo.z);
-        float transmittance = exp(-sig_t * hInfo.z);
+        // float pdf = exp(-sig_t * hInfo.z);
+        // float transmittance = exp(-sig_t * hInfo.z);
 
         // if we hit a light
-        if ( hInfo.isLight ) {
-            if ( bounce == 0 ) { hInfo.light->Radiance(sInfo); }
-            return Color().Black();
-        }
-        else {
-            // if we hit a surface, we need to sample it's brdf and the lights as in typical path tracing
-            return transmittance / pdf * materialSample(ray, sInfo, hInfo, bounce);
-        }
-    }
+        // if ( hInfo.isLight ) {
+        //     if ( bounce == 0 ) { hInfo.light->Radiance(sInfo); }
+        //     return Color().Black();
+        // }
+        // else {
+        //     // if we hit a surface, we need to sample it's brdf and the lights as in typical path tracing
+        //     return transmittance / pdf * materialSample(ray, sInfo, hInfo, bounce);
+        // }
+    // }
 
-    if ( bounce == 0 ) {
-        Vec3f uvw(float(sInfo.X())/renderImage.GetWidth(), float(sInfo.Y())/renderImage.GetHeight(), 0.5);
-        return scene.background.Eval(uvw);
+    if ( hInfo.isLight ) {
+        if ( bounce == 0 ) { return hInfo.light->Radiance(sInfo); }
+        return Color().Black();
     }
-    return scene.environment.EvalEnvironment(ray.dir);
+    return materialSample(ray, sInfo, hInfo, bounce);
+
+    // if ( bounce == 0 ) {
+    //     Vec3f uvw(float(sInfo.X())/renderImage.GetWidth(), float(sInfo.Y())/renderImage.GetHeight(), 0.5);
+    //     return scene.background.Eval(uvw);
+    // }
+    // return scene.environment.EvalEnvironment(ray.dir);
 }
 
 Color Raytracer::materialSample( Ray ray, SamplerInfo sInfo, HitInfo& hInfo, int bounce ) {
